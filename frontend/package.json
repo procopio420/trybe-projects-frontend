@@ -1,6 +1,6 @@
 {
   "name": "trybe-projects",
-  "homepage": "https://procopio420.github.io/trybe-projects",
+  "homepage": "https://trybe-project-explorer.herokuapp.com/",
   "version": "0.1.0",
   "engines": {
     "node": "10.19.0"
