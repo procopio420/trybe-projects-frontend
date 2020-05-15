@@ -216,7 +216,7 @@ const Repository: React.FC = () => {
     <>
       <Header>
         <img src={logoImg} width={150} alt="Trybe - Projects Explorer" />
-        <Link to="/trybe-projects">
+        <Link to="/">
           <FiChevronLeft size={16} />
           Voltar
         </Link>
