@@ -1,6 +1,5 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
-import Select from 'react-select';
 
 import api, { my_api } from '../../services/api';
 import logoImg from '../../assets/trybe.png';
@@ -17,14 +16,6 @@ interface Repository {
     avatar_url: string;
   };
 }
-
-const SelectTeamOptions = [
-  { value: '1', label: 'Turma 1' },
-  { value: '2', label: 'Turma 2' },
-  { value: '3', label: 'Turma 3' },
-  { value: '4', label: 'Turma 4' },
-  { value: '5', label: 'Turma 5' },
-];
 
 const Dashboard: React.FC = () => {
   const [team, setTeam] = useState('');
@@ -61,7 +52,7 @@ const Dashboard: React.FC = () => {
 
     if(team==='0') {
       setInputError('Escolha uma turma!')
-      return
+      return;
     }
 
     localStorage.setItem('@GithubExplorer:team', team);
