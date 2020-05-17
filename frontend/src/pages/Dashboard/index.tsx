@@ -1,8 +1,8 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
-import api, { my_api } from '../../services/api';
+import Select from 'react-select';
 
+import api, { my_api } from '../../services/api';
 import logoImg from '../../assets/trybe.png';
 
 import { Title, Form, Repositories, Error } from './styles';
@@ -17,6 +17,14 @@ interface Repository {
     avatar_url: string;
   };
 }
+
+const SelectTeamOptions = [
+  { value: '1', label: 'Turma 1' },
+  { value: '2', label: 'Turma 2' },
+  { value: '3', label: 'Turma 3' },
+  { value: '4', label: 'Turma 4' },
+  { value: '5', label: 'Turma 5' },
+];
 
 const Dashboard: React.FC = () => {
   const [team, setTeam] = useState('');
@@ -51,16 +59,12 @@ const Dashboard: React.FC = () => {
     event.preventDefault();
     setInputError('');
 
-    localStorage.setItem('@GithubExplorer:team', team);
+    if(team==='0') {
+      setInputError('Escolha uma turma!')
+      return
+    }
 
-    if (!team) {
-      setInputError('Digite o número da turma!');
-      return false;
-    }
-    if (Number(team) > 5 || Number(team) < 1) {
-      setInputError('Turma inexistente!');
-      return false;
-    }
+    localStorage.setItem('@GithubExplorer:team', team);
 
     try {
       const name = `sd-0${team}`;
@@ -91,9 +95,10 @@ const Dashboard: React.FC = () => {
           repositoriesFromTeam.push(rep);
         }
       }
+      await my_api.post('/createClass', { class_name: name });
       setTeamStr(team);
+      setTeam('0')
       setRepositories(repositoriesFromTeam);
-      setTeam(team);
       setInputError('');
     } catch (e) {
       setInputError(
@@ -103,12 +108,9 @@ const Dashboard: React.FC = () => {
     return true;
   }
 
-  useEffect(() => {
-    repositories.forEach((rep) => {
-      my_api.post(`/create/${rep.id}`);
-      console.log('CREATE TABLE')
-    });
-  }, [repositories]);
+  function handleSelectChange(selectedValue) {
+    setTeam(selectedValue.target.value);
+  }
 
   return (
     <>
@@ -116,12 +118,15 @@ const Dashboard: React.FC = () => {
       <Title>Acompanhe os projetos Trybe</Title>
 
       <Form hasError={!!inputError} onSubmit={handleAddRepository}>
-        <input
-          value={team}
-          onChange={(e) => setTeam(e.target.value)}
-          placeholder="Digite a turma: (ex.: 1)"
-          type="number"
-        />
+        <select className="browser-default custom-select" onChange={(e)=>handleSelectChange(e)}>
+          <option value="0">Escolha uma turma</option>
+          <option value="1">Turma 1</option>
+          <option value="2">Turma 2</option>
+          <option value="3">Turma 3</option>
+          <option value="4">Turma 4</option>
+          <option value="5">Turma 5</option>
+        </select>
+
         <button type="submit">Pesquisar</button>
       </Form>
 
@@ -130,9 +135,9 @@ const Dashboard: React.FC = () => {
       <Repositories>
         {teamStr && <h2>Turma {teamStr}</h2>}
         {repositories.map((repository) => (
-          <Link
+          <a
             key={repository.full_name}
-            to={`/trybe-projects/repository/${repository.full_name}`}
+            href={`/repository/${repository.full_name}`}
           >
             <img
               src={repository.owner.avatar_url}
@@ -142,7 +147,7 @@ const Dashboard: React.FC = () => {
               <strong>{repository.name}</strong>
             </div>
             <FiChevronRight size={20} />
-          </Link>
+          </a>
         ))}
       </Repositories>
     </>

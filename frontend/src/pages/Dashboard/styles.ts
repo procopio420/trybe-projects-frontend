@@ -25,19 +25,13 @@ export const Form = styled.form<FormProps>`
 
   display: flex;
 
-  input {
+  select {
     flex: 1;
     height: 70px;
     padding: 0 24px;
     border-radius: 5px 0 0 5px;
     color: #3a3a3a;
     border: 2px solid #fff;
-
-    ${(props) =>
-      props.hasError &&
-      css`
-        border: 2px solid #c53030;
-      `}
 
     &::placeholder {
       color: #a8a8b3;
