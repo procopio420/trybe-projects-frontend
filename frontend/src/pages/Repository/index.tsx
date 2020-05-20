@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouteMatch, Link } from 'react-router-dom';
-import { FiArrowRight, FiChevronLeft , FiChevronRight, FiUsers } from 'react-icons/fi';
+import {
+  FiArrowRight,
+  FiChevronLeft,
+  FiChevronRight,
+  FiUsers,
+} from 'react-icons/fi';
 import ReactLoading from 'react-loading';
 import Modal from 'react-bootstrap/Modal';
 
@@ -26,6 +31,7 @@ interface Repository {
     login: string;
     avatar_url: string;
   };
+  html_url: string;
 }
 
 interface PullRequest {
@@ -50,8 +56,8 @@ interface PullRequest {
 }
 
 interface Dupla {
-  dupla1: string;
-  dupla2: string;
+  student1: string;
+  student2: string;
 }
 
 const Repository: React.FC = () => {
@@ -59,7 +65,9 @@ const Repository: React.FC = () => {
 
   const [repository, setRepository] = useState<Repository | null>(null);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
-  const [pullRequestsWithCr, setPullRequestsWithCr] = useState<String[]>([]);
+  const [pullRequestsWithCr, setPullRequestsWithCr] = useState<PullRequest[]>(
+    [],
+  );
   const [helpNumber, setHelpNumber] = useState(0);
   const [crNumber, setCrNumber] = useState(0);
 
@@ -67,6 +75,9 @@ const Repository: React.FC = () => {
 
   const [dataToShow, setDataToShow] = useState<PullRequest[]>([]);
   const [showModal, setShowModal] = useState<Boolean>(false);
+
+  const [classId, setClassId] = useState(0);
+  const [repositoryId, setRepositoryId] = useState(0);
 
   useEffect(() => {
     api.get(`repos/${params.repository}`).then((response) => {
@@ -85,6 +96,11 @@ const Repository: React.FC = () => {
         console.log('COMANDO: SETAR PULL REQUESTS');
         console.log('--------------------------------');
       });
+    my_api
+      .get(`/getClassId/${params.repository.slice(7, 12)}`)
+      .then((response) => {
+        setClassId(response.data.class_id);
+      });
   }, [params.repository]);
 
   useEffect(() => {
@@ -94,6 +110,15 @@ const Repository: React.FC = () => {
       console.log('EFEITO: REPOSITORIO SETADO');
       console.log(repository);
       console.log('--------------------------------');
+      const requestObject = {
+        project_name: repository.name,
+        repository_url: repository.html_url,
+        repository_github_id: repository.id,
+        class_id: classId,
+      };
+      my_api.post('/createRepository', requestObject).then((response) => {
+        setRepositoryId(response.data.repository_id);
+      });
     }
   }, [repository]);
   useEffect(() => {
@@ -138,7 +163,7 @@ const Repository: React.FC = () => {
             if (pull.labels[i].name === 'code-review') {
               crs++;
               pull.codeReview = true;
-              prWithCr.push(pull.user.login);
+              prWithCr.push(pull);
             }
           }
         }
@@ -153,7 +178,9 @@ const Repository: React.FC = () => {
   function postTheDataDuplas() {
     console.log('----------------------------------');
     console.log('STARTED POST', 'AT: ', new Date().getMilliseconds());
-    my_api.post(`/${repository?.id}`, pullRequestsWithCr);
+    const students = pullRequestsWithCr.map((pull) => pull.user.login);
+    const requestObject = { students, repository_id: repositoryId };
+    my_api.post(`/createPair`, requestObject);
     console.log(
       'POST FINISHED',
       'AT: ',
@@ -171,7 +198,7 @@ const Repository: React.FC = () => {
   function getAndSetDuplasState() {
     console.log('----------------------------------');
     console.log('STARTED GET', 'AT: ', new Date().getMilliseconds());
-    my_api.get(`/${repository?.id}`).then((response) => {
+    my_api.get(`/${repositoryId}`).then((response) => {
       setDuplas(response.data);
       console.log(
         'GET FINISHED',
@@ -265,11 +292,11 @@ const Repository: React.FC = () => {
           <TableContainer>
             <h1>Duplas de Code Review</h1>
             {duplas.length > 0 ? (
-              duplas.map((dupla, index) => (
-                <section key={dupla.dupla1}>
-                  <p>{dupla.dupla1}</p>
+              duplas.map((dupla) => (
+                <section key={dupla.student1}>
+                  <p>{dupla.student1}</p>
                   <FiArrowRight size={20} />
-                  <p>{dupla.dupla2}</p>
+                  <p>{dupla.student2}</p>
                 </section>
               ))
             ) : (
