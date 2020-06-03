@@ -53,7 +53,6 @@ interface PullRequest {
   codeReview: boolean;
   helpWanted: boolean;
   review_comments_url: string;
-  reviewers: Promise<any>;
 }
 
 interface Dupla {
@@ -63,7 +62,7 @@ interface Dupla {
   avatar_student_2: string;
   comments_student_2: string;
   url_student_2: string;
-  done: boolean;
+  code_review_done: boolean;
 }
 
 const Repository: React.FC = () => {
@@ -155,10 +154,11 @@ const Repository: React.FC = () => {
       url: pr.html_url,
       student: pr.user.login,
       avatar: pr.user.avatar_url,
-      reviewers: [],
+      review_url: pr.review_comments_url,
     }));
     const requestObject = { data: sendDataPR, repository_id: repositoryId };
     my_api.post(`/createPair`, requestObject);
+    my_api.get(`/update/${repositoryId}`);
     setTimeout(() => {
       if (repository) {
         getAndSetDuplasState();
@@ -251,6 +251,11 @@ const Repository: React.FC = () => {
                     type="button"
                     className="list-group-item list-group-item-action d-flex justify-content-around align-items-center"
                     href={dupla.url_student_2}
+                    style={
+                      dupla.code_review_done
+                        ? { backgroundColor: '#0fa36b', color: 'white' }
+                        : {}
+                    }
                   >
                     <div className="w-50 d-flex align-items-center justify-content-start">
                       <img
