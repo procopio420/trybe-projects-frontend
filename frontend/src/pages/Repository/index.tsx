@@ -52,12 +52,18 @@ interface PullRequest {
   ];
   codeReview: boolean;
   helpWanted: boolean;
-  jaTemDupla: boolean;
+  review_comments_url: string;
+  reviewers: Promise<any>;
 }
 
 interface Dupla {
   student1: string;
   student2: string;
+  avatar_student_1: string;
+  avatar_student_2: string;
+  comments_student_2: string;
+  url_student_2: string;
+  done: boolean;
 }
 
 const Repository: React.FC = () => {
@@ -74,7 +80,7 @@ const Repository: React.FC = () => {
   const [duplas, setDuplas] = useState<Dupla[]>([]);
 
   const [dataToShow, setDataToShow] = useState<PullRequest[]>([]);
-  const [showModal, setShowModal] = useState<Boolean>(false);
+  const [showModal, setShowModal] = useState(false);
 
   const [classId, setClassId] = useState(0);
   const [repositoryId, setRepositoryId] = useState(0);
@@ -82,19 +88,11 @@ const Repository: React.FC = () => {
   useEffect(() => {
     api.get(`repos/${params.repository}`).then((response) => {
       setRepository(response.data);
-      console.log('--------------------------------');
-      console.log('HORA (ms): ', new Date().getMilliseconds());
-      console.log('COMANDO: SETAR REPOSITORIO');
-      console.log('--------------------------------');
     });
     api
       .get(`repos/${params.repository}/pulls?per_page=100`)
       .then((response) => {
         setPullRequests(response.data);
-        console.log('--------------------------------');
-        console.log('HORA (ms): ', new Date().getMilliseconds());
-        console.log('COMANDO: SETAR PULL REQUESTS');
-        console.log('--------------------------------');
       });
     my_api
       .get(`/getClassId/${params.repository.slice(7, 12)}`)
@@ -105,11 +103,6 @@ const Repository: React.FC = () => {
 
   useEffect(() => {
     if (repository) {
-      console.log('--------------------------------');
-      console.log('HORA (ms): ', new Date().getMilliseconds());
-      console.log('EFEITO: REPOSITORIO SETADO');
-      console.log(repository);
-      console.log('--------------------------------');
       const requestObject = {
         project_name: repository.name,
         repository_url: repository.html_url,
@@ -121,39 +114,21 @@ const Repository: React.FC = () => {
       });
     }
   }, [repository]);
-  useEffect(() => {
-    if (pullRequests.length > 0) {
-      console.log('--------------------------------');
-      console.log('HORA (ms): ', new Date().getMilliseconds());
-      console.log('EFEITO: PULLREQUESTS SETADO');
-      console.log(pullRequests);
-      console.log('--------------------------------');
-    }
-  }, [pullRequests]);
+
   useEffect(() => {
     if (pullRequestsWithCr.length > 0) {
-      console.log('--------------------------------');
-      console.log('HORA (ms): ', new Date().getMilliseconds());
-      console.log('EFEITO: PULLREQUESTS COM CR SETADO');
-      console.log(pullRequestsWithCr);
-      console.log('--------------------------------');
       postTheDataDuplas();
     }
   }, [pullRequestsWithCr]);
 
   useEffect(() => {
     if (pullRequests.length > 0) {
-      console.log('--------------------------------');
-      console.log('HORA (ms): ', new Date().getMilliseconds());
-      console.log('COMANDO: SETAR PULLREQUESTS COM CR');
-      console.log('--------------------------------');
       let helps = 0;
       let crs = 0;
       let prWithCr = [];
       for (let pull of pullRequests) {
         pull.helpWanted = false;
         pull.codeReview = false;
-        pull.jaTemDupla = false;
         if (pull.labels.length > 0) {
           for (let i = 0; i < pull.labels.length; i++) {
             if (pull.labels[i].name === 'help wanted') {
@@ -176,18 +151,14 @@ const Repository: React.FC = () => {
   }, [pullRequests]);
 
   function postTheDataDuplas() {
-    console.log('----------------------------------');
-    console.log('STARTED POST', 'AT: ', new Date().getMilliseconds());
-    const students = pullRequestsWithCr.map((pull) => pull.user.login);
-    const requestObject = { students, repository_id: repositoryId };
+    const sendDataPR = pullRequestsWithCr.map((pr) => ({
+      url: pr.html_url,
+      student: pr.user.login,
+      avatar: pr.user.avatar_url,
+      reviewers: [],
+    }));
+    const requestObject = { data: sendDataPR, repository_id: repositoryId };
     my_api.post(`/createPair`, requestObject);
-    console.log(
-      'POST FINISHED',
-      'AT: ',
-      new Date().getMilliseconds(),
-      pullRequestsWithCr,
-    );
-    console.log('----------------------------------');
     setTimeout(() => {
       if (repository) {
         getAndSetDuplasState();
@@ -196,29 +167,10 @@ const Repository: React.FC = () => {
   }
 
   function getAndSetDuplasState() {
-    console.log('----------------------------------');
-    console.log('STARTED GET', 'AT: ', new Date().getMilliseconds());
-    my_api.get(`/${repositoryId}`).then((response) => {
+    my_api.get(`/${repositoryId}`).then(async (response) => {
       setDuplas(response.data);
-      console.log(
-        'GET FINISHED',
-        'AT: ',
-        new Date().getMilliseconds(),
-        response.data,
-      );
-
-      console.log('----------------------------------');
     });
   }
-
-  useEffect(() => {
-    if (duplas.length > 0) {
-      console.log('----------------------------------');
-      console.log('DUPLAS UPDATED', 'AT: ', new Date().getMilliseconds());
-      console.log(duplas);
-      console.log('----------------------------------');
-    }
-  }, [duplas]);
 
   function handleDuplasButton() {
     handleOpenModal();
@@ -292,13 +244,36 @@ const Repository: React.FC = () => {
           <TableContainer>
             <h1>Duplas de Code Review</h1>
             {duplas.length > 0 ? (
-              duplas.map((dupla) => (
-                <section key={dupla.student1}>
-                  <p>{dupla.student1}</p>
-                  <FiArrowRight size={20} />
-                  <p>{dupla.student2}</p>
-                </section>
-              ))
+              <div className="list-group">
+                {duplas.map((dupla) => (
+                  <a
+                    key={dupla.student1}
+                    type="button"
+                    className="list-group-item list-group-item-action d-flex justify-content-around align-items-center"
+                    href={dupla.url_student_2}
+                  >
+                    <div className="w-50 d-flex align-items-center justify-content-start">
+                      <img
+                        src={dupla.avatar_student_1}
+                        className="rounded-circle mr-5"
+                        alt=""
+                        width="50px"
+                      />
+                      {dupla.student1}
+                    </div>
+                    <FiArrowRight size={16} />
+                    <div className="w-50 d-flex align-items-center justify-content-end">
+                      {dupla.student2}
+                      <img
+                        src={dupla.avatar_student_2}
+                        className="rounded-circle ml-5"
+                        alt=""
+                        width="50px"
+                      />
+                    </div>
+                  </a>
+                ))}
+              </div>
             ) : (
               <article>
                 <div>

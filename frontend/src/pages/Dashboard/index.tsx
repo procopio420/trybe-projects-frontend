@@ -50,8 +50,8 @@ const Dashboard: React.FC = () => {
     event.preventDefault();
     setInputError('');
 
-    if(team==='0') {
-      setInputError('Escolha uma turma!')
+    if (team === '0') {
+      setInputError('Escolha uma turma!');
       return;
     }
 
@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
       }
       await my_api.post('/createClass', { class_name: name });
       setTeamStr(team);
-      setTeam('0')
+      setTeam('0');
       setRepositories(repositoriesFromTeam);
       setInputError('');
     } catch (e) {
@@ -109,7 +109,10 @@ const Dashboard: React.FC = () => {
       <Title>Acompanhe os projetos Trybe</Title>
 
       <Form hasError={!!inputError} onSubmit={handleAddRepository}>
-        <select className="browser-default custom-select" onChange={(e)=>handleSelectChange(e)}>
+        <select
+          className="browser-default custom-select"
+          onChange={(e) => handleSelectChange(e)}
+        >
           <option value="0">Escolha uma turma</option>
           <option value="1">Turma 1</option>
           <option value="2">Turma 2</option>
