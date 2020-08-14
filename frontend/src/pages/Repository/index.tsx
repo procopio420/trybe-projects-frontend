@@ -158,7 +158,7 @@ const Repository: React.FC = () => {
     }));
     const requestObject = { data: sendDataPR, repository_id: repositoryId };
     my_api.post(`/createPair`, requestObject);
-    my_api.get(`/update/${repositoryId}`);
+    // my_api.get(`/update/${repositoryId}`);
     setTimeout(() => {
       if (repository) {
         getAndSetDuplasState();

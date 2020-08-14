@@ -3,7 +3,7 @@
   "homepage": "https://trybe-project-explorer.herokuapp.com/",
   "version": "0.1.0",
   "engines": {
-    "node": "12.16.3"
+    "node": "12.18.3"
   },
   "private": false,
   "dependencies": {
